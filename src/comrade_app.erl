@@ -11,8 +11,8 @@ start(_StartType, _StartArgs) ->
     lager:info("privvv up"),
     Dispatch = cowboy_router:compile([
         {'_', [
-            {"/", cowboy_static, {priv_file, comrade, "static/index.htm"}} ,
-            {"/comrade", main_handler, []}
+            {"/", cowboy_static, {priv_file, comrade, "static/index.htm"}},
+            {"/comrade", websocket_handler, []}
         ]}
     ]),
     {ok, _} = cowboy:start_http(http, 100, [{port, 9000}], [{env, [{dispatch, Dispatch}]}]),

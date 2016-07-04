@@ -4,6 +4,34 @@
 	<title></title>
 </head>
 <body>
-	<p>Test2</p>
+	<textarea id="sync-area"></textarea>
+
+	<script>
+		class Textbox {
+			constructor(name, element) {
+				this.name = name;
+				element.addEventListener('input', this.onUserUpdate, false);
+			}
+			commit() {}
+			onUserUpdate(event) {
+				console.log(event);
+			}
+
+
+		}
+
+
+		var socket = new WebSocket('ws://localhost:9000/comrade');
+		socket.onopen = function(event) {
+			socket.send("Here you have!");
+		}
+		socket.onmessage = function(event) {
+			console.log(event.data);
+		}
+		var textboxElem = document.getElementById('sync-area');
+		var textbox = new Textbox('test_document', textboxElem);
+
+		
+	</script>
 </body>
 </html>
