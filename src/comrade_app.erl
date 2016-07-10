@@ -5,9 +5,6 @@
 -export([start/2, stop/1]).
 
 start(_StartType, _StartArgs) ->
-    lager:warning("Start app"),
-    {ModPath, _} = filename:find_src(?MODULE),
-    lager:info(ModPath),
     lager:info("privvv up"),
     Dispatch = cowboy_router:compile([
         {'_', [
@@ -15,6 +12,8 @@ start(_StartType, _StartArgs) ->
             {"/comrade", websocket_handler, []}
         ]}
     ]),
+    lager:info("first"),
+    doc_manager_sup:start_link(),
     {ok, _} = cowboy:start_http(http, 100, [{port, 9000}], [{env, [{dispatch, Dispatch}]}]),
     comrade_sup:start_link().
 
