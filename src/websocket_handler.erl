@@ -17,9 +17,23 @@ init(Req, Opts) ->
 	{cowboy_websocket, Req, Opts}.
 
 
-websocket_handle({text, _}, Req, State) ->
+websocket_handle({text, OpJSON}, Req, State) ->
 	lager:info("New handle1"),
-	Pid = doc_manager:get_doc_proc("My secret diary"),
+	Op = jsx:decode(OpJSON),
+	OpName = lists:nth(1, Op),
+	case OpName of
+		<<"open">> ->
+			LocalID = lists:nth(2, Op),
+			OpID = lists:nth(2, Op),
+			Pid = doc_manager:start_subscription(OpID, self(),
+			State2 = State#state{openDocs = [{LocalID, Pid}|OpenDocs]}
+			{reply, {text, ...}, Req, State2};
+		<<"close">> ->
+			;
+		_ ->
+			;
+	end,
+	Pid = doc_manager:start_subscription("My secret diary"),
 	lager:info("started on pid ~p", [Pid]),
 	{reply, {text, "Delicious!"}, Req, State};
 

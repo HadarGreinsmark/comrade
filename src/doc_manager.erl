@@ -8,7 +8,7 @@
          get_doc_proc/1]).
 
 
--record(state, {openDocs = []}).
+-record(state, {}).
 
 start_link() ->
 	gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
@@ -22,17 +22,26 @@ init([]) ->
 terminate(Reason, State) ->
 	ok.
 
-get_doc_proc(DocName) ->
-	gen_server:call(?MODULE, {get_doc_proc, DocName}).
+get_doc_proc(DocId, EditorPid) ->
+	gen_server:call(?MODULE, {get_doc_proc, DocId, EditorPid}).
 
 
-handle_call({get_doc_proc, DocName}, _From, #state{openDocs=OpenDocs} = State) ->
+handle_call({start_subscription, DocId, EditorPid}, _From, State) ->
 	lager:info("handle_call"),
-	case lists:keyfind(DocName, 1, OpenDocs) of
-		{_, Pid} ->
+	case supervisor:start_child(ot_text_sup, DocId) of
+		{ok, Pid} ->
 			{reply, Pid, State};
-		false ->
-			{ok, Pid} = supervisor:start_child(ot_text_sup, [DocName]),
-			NewDoc = {DocName, Pid},
-			{reply, Pid, State#state{openDocs = [NewDoc|OpenDocs]}}
+		{error, {already_started, Pid}} ->
+			{reply, Pid, State}
+	end,
+	ot_text:register_editor(EditorPid).
+
+
+handle_call({end_subscription, DocId}, _From, State) ->
+	lager:info("handle_call"),
+	case supervisor:start_child(ot_text_sup, DocId) of
+		{ok, Pid} ->
+			{reply, Pid, State};
+		{error, {already_started, Pid}} ->
+			{reply, Pid, State}
 	end.

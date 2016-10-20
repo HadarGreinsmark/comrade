@@ -11,5 +11,5 @@ start_link() ->
 
 init([]) ->
 	{ok, { {simple_one_for_one, 5, 10}, [
-		#{ id => ot_text, start => {ot_text, start_link, []} }
+		#{ id => undefined, start => {ot_text, start_link, []} }
 	]}}.
