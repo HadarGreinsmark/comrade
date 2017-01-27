@@ -14,8 +14,8 @@ start(_StartType, _StartArgs) ->
     ]),
     lager:info("first"),
     doc_manager_sup:start_link(),
-    {ok, _} = cowboy:start_http(http, 100, [{port, 9000}], [{env, [{dispatch, Dispatch}]}]),
-    comrade_sup:start_link().
+    {ok, _} = cowboy:start_http(http, 100, [{port, 9000}], [{env, [{dispatch, Dispatch}]}]).
+    %comrade_sup:start_link().
 
 stop(_State) ->
     ok.

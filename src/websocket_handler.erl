@@ -7,7 +7,7 @@
          terminate/3]).
 
 -record(state, {
-	openDocs = []
+	openDocs = [] % TODO: doesn't scale well
 }).
 
 init(Req, Opts) ->
@@ -17,25 +17,31 @@ init(Req, Opts) ->
 	{cowboy_websocket, Req, Opts}.
 
 
-websocket_handle({text, OpJSON}, Req, State) ->
+websocket_handle({text, OperationJSON}, Req, State) ->
 	lager:info("New handle1"),
-	Op = jsx:decode(OpJSON),
-	OpName = lists:nth(1, Op),
-	case OpName of
-		<<"open">> ->
-			LocalID = lists:nth(2, Op),
-			OpID = lists:nth(2, Op),
-			Pid = doc_manager:start_subscription(OpID, self(),
-			State2 = State#state{openDocs = [{LocalID, Pid}|OpenDocs]}
-			{reply, {text, ...}, Req, State2};
-		<<"close">> ->
+	Operation = jsx:decode(OperationJSON),
+	OpName = lists:nth(1, Operation),
+	case Operation of
+		[<<"open">>, LocalID, ClientVersion, DocId] ->
+			Pid = doc_manager:start_subscription(DocId, self()),
+			State2 = State#state{openDocs = [{LocalID, Pid}|State#state.openDocs]},
+			{reply, {text, {"ok", LocalID, ClientVersion}}, Req, State2}; % TODO: should send update based on the client version
+
+		[<<"close">>, LocalID] ->
+			{value, {_, Pid}} = lists:keysearch(LocalID, 1, State#state.openDocs),
+			doc_manager:end_subscription(Pid, self()),
+			OpenDocs2 = lists:keydelete(LocalID, State#state.openDocs),
+			State2 = State#state{openDocs = OpenDocs2},
+			{ok, Req, State2}
 			;
+		%[<<"ins">>, LocalID, ClientVersion, DocId] ->
+		%	;
 		_ ->
-			;
-	end,
-	Pid = doc_manager:start_subscription("My secret diary"),
-	lager:info("started on pid ~p", [Pid]),
-	{reply, {text, "Delicious!"}, Req, State};
+			{ok, Req, State}
+	end;
+	%Pid = doc_manager:start_subscription("My secret diary"),
+	%lager:info("started on pid ~p", [Pid]);
+	%{reply, {text, "Delicious!"}, Req, State};
 
 websocket_handle(_Data, Req, State) ->
 	lager:info("New handle2"),
