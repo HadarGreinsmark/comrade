@@ -5,7 +5,9 @@
          init/1,
          terminate/2,
          handle_call/3,
-         get_doc_proc/2]).
+         get_doc_proc/2,
+         start_subscription/2,
+         end_subscription/2]).
 
 
 -record(state, {}).
@@ -29,19 +31,20 @@ start_subscription(DocId, EditorPid) ->
 	gen_server:call(?MODULE, {start_subscription, DocId, EditorPid}).
 
 % takes DocId and EditorPid in order to find the link between socket and document
-end_subscription(DocManagerPid, DocId, EditorPid) ->
+end_subscription(DocId, EditorPid) ->
 	gen_server:call(?MODULE, {end_subscription, DocId, EditorPid}).
 
 
 handle_call({start_subscription, DocId, EditorPid}, _From, State) ->
 	lager:info("handle_call"),
-	case supervisor:start_child(ot_text_sup, DocId) of
+	Reply = case supervisor:start_child(ot_text_sup, [DocId]) of
 		{ok, Pid} ->
 			{reply, Pid, State};
 		{error, {already_started, Pid}} ->
 			{reply, Pid, State}
 	end,
-	ot_text:register_editor(EditorPid);
+	ot_text:register_editor(EditorPid),
+	Reply;
 
 
 handle_call({end_subscription, DocManagerPid, EditorPid}, _From, State) ->
