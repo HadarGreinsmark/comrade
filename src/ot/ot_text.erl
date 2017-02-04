@@ -42,7 +42,7 @@ transform(Op1, Op2) ->
 register_editor(EditorPid) ->
 	gen_server:cast(?MODULE, {register_editor, EditorPid}).
 
-handle_cast({register_editor, EditorPid}, _From, #state{openEditors=OpenEditors} = State) ->
+handle_cast({register_editor, EditorPid}, #state{openEditors=OpenEditors} = State) ->
 	State2 = State#state{openEditors = [EditorPid|openEditors]},
 	{noreply, State2}.
 

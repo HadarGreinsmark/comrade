@@ -10,8 +10,9 @@
 	openDocs = [] % TODO: doesn't scale well
 }).
 
-init(Req, _State) ->
+init(Req, State) ->
 	lager:info("New request"),
+	lager:info("444~p",[State]),
 	% Req2 = cowboy_req:set_resp_header("sec-websocket-protocol", "comrade/0.1", Req),
 	% CONTINUE: start/terminate child, check if started, terminated
 	{cowboy_websocket, Req, #state{}}.
@@ -20,6 +21,7 @@ init(Req, _State) ->
 websocket_handle({text, OperationJSON}, Req, State) ->
 	lager:info("New handle1"),
 	Operation = jsx:decode(OperationJSON),
+	lager:info("444~p",[Operation]),
 	OpName = lists:nth(1, Operation),
 	case Operation of
 		[<<"open">>, LocalID, ClientVersion, DocId] ->
@@ -27,7 +29,8 @@ websocket_handle({text, OperationJSON}, Req, State) ->
 			lager:info("111~p",[State]),
 			State2 = State#state{openDocs = [{LocalID, Pid}|State#state.openDocs]},
 			lager:info("000~p",[State2]),
-			{reply, {text, {"ok", LocalID, ClientVersion}}, Req, State2}; % TODO: should send update based on the client version
+			FrameMsg = jsx:encode([ok, LocalID, ClientVersion]),
+			{reply, {text, FrameMsg}, Req, State2}; % TODO: should send update based on the client version
 
 		[<<"close">>, LocalID] ->
 			{value, {_, Pid}} = lists:keysearch(LocalID, 1, State#state.openDocs),
