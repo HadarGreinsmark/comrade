@@ -24,6 +24,8 @@
 		var socket = new WebSocket('ws://localhost:9000/comrade');
 		socket.onopen = function(event) {
 			socket.send('["open",0, 0, "xfh"]');
+			socket.send('["open",1, 0, "yyy"]');
+            socket.send('["open",0, 0, "xfh"]');
 		}
 		socket.onmessage = function(event) {
 			console.log(event.data);
